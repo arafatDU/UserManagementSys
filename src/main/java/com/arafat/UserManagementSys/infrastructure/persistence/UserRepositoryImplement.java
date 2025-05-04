@@ -34,7 +34,6 @@ public class UserRepositoryImplement implements UserRepository {
 
     @Override
     public List<User> findAll(int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page,size);
-        return userJpaRepository.findAll(pageRequest).stream().map(UserJpaEntity::toDomainEntity).collect(Collectors.toList());
+        return userJpaRepository.findAll().stream().map(UserJpaEntity::toDomainEntity).collect(Collectors.toList());
     }
 }

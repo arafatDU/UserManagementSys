@@ -12,10 +12,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
-public class RoleRepositoryImpl implements RoleRepository {
+public class RoleRepositoryImplement implements RoleRepository {
     private final RoleJpaRepository roleJpaRepository;
 
-    public RoleRepositoryImpl(RoleJpaRepository roleJpaRepository) {
+    public RoleRepositoryImplement(RoleJpaRepository roleJpaRepository) {
         this.roleJpaRepository = roleJpaRepository;
     }
 

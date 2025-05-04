@@ -13,10 +13,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
-public class UserRepositoryImpl implements UserRepository {
+public class UserRepositoryImplement implements UserRepository {
     private final UserJpaRepository userJpaRepository;
 
-    public UserRepositoryImpl(UserJpaRepository userJpaRepository) {
+    public UserRepositoryImplement(UserJpaRepository userJpaRepository) {
         this.userJpaRepository = userJpaRepository;
     }
 

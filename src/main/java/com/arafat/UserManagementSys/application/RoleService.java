@@ -1,25 +1,43 @@
 package com.arafat.UserManagementSys.application;
 
 
-import com.arafat.UserManagementSys.application.dto.CreateRoleRequest;
 import com.arafat.UserManagementSys.application.interfaces.RoleRepository;
 import com.arafat.UserManagementSys.domain.Role;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 import java.util.UUID;
 
-@Service
 public class RoleService {
-    private final RoleRepository roleRepo;
+    private final RoleRepository roleRepository;
 
-    public RoleService(@Qualifier("roleJpaRepository") RoleRepository roleRepo) {
-        this.roleRepo = roleRepo;
+    public RoleService(RoleRepository roleRepository) {
+        this.roleRepository = roleRepository;
     }
 
-    @Transactional
-    public UUID createRole(CreateRoleRequest req) {
-        var role = new Role(req.roleName());
-        return roleRepo.save(role).getId();
+    public Role createRole(String roleName) {
+        validateRoleInput(roleName);
+        Role role = new Role(roleName);
+        return roleRepository.save(role);
+    }
+
+    public Role getRoleById(UUID id) {
+        return roleRepository.findById(id)
+                .orElseThrow(() -> new RoleNotFoundException("Role with ID " + id + " not found"));
+    }
+
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
+    }
+
+    private void validateRoleInput(String roleName) {
+        if (roleName == null || roleName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Role name cannot be empty");
+        }
+    }
+
+    public static class RoleNotFoundException extends RuntimeException {
+        public RoleNotFoundException(String message) {
+            super(message);
+        }
     }
 }

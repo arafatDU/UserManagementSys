@@ -2,20 +2,48 @@ package com.arafat.UserManagementSys.infrastructure.controller;
 
 
 import com.arafat.UserManagementSys.application.RoleService;
-import com.arafat.UserManagementSys.application.dto.CreateRoleRequest;
+import com.arafat.UserManagementSys.domain.Role;
+import com.arafat.UserManagementSys.infrastructure.controller.dto.CreateRoleRequest;
+import com.arafat.UserManagementSys.infrastructure.controller.dto.RoleDTO;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/roles")
 public class RoleController {
-    private final RoleService svc;
-    public RoleController(RoleService svc) { this.svc = svc; }
+    private final RoleService roleService;
+
+    public RoleController(RoleService roleService) {
+        this.roleService = roleService;
+    }
 
     @PostMapping
-    public ResponseEntity<UUID> create(@Valid @RequestBody CreateRoleRequest req) {
-        return ResponseEntity.ok(svc.createRole(req));
+    public ResponseEntity<Map<String, UUID>> createRole(@Valid @RequestBody CreateRoleRequest request) {
+        Role createdRole = roleService.createRole(request.getRoleName());
+        Map<String, UUID> response = new HashMap<>();
+        response.put("id", createdRole.getId());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RoleDTO> getRoleById(@PathVariable UUID id) {
+        Role role = roleService.getRoleById(id);
+        return ResponseEntity.ok(RoleDTO.fromDomain(role));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<RoleDTO>> getAllRoles() {
+        List<RoleDTO> roles = roleService.getAllRoles().stream()
+                .map(RoleDTO::fromDomain)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(roles);
     }
 }

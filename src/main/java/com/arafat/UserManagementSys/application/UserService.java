@@ -1,63 +1,79 @@
 package com.arafat.UserManagementSys.application;
 
 
-import com.arafat.UserManagementSys.application.dto.CreateUserRequest;
-import com.arafat.UserManagementSys.application.dto.UserResponse;
+
 import com.arafat.UserManagementSys.application.interfaces.RoleRepository;
 import com.arafat.UserManagementSys.application.interfaces.UserRepository;
 import com.arafat.UserManagementSys.domain.Role;
 import com.arafat.UserManagementSys.domain.User;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-@Service
 public class UserService {
-    private final UserRepository userRepo;
-    private final RoleRepository roleRepo;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
-    public UserService(UserRepository userRepo, RoleRepository roleRepo) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
+    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
-    @Transactional
-    public UUID createUser(CreateUserRequest req) {
-        var user = new User(req.name(), req.email());
-        return userRepo.save(user).getId();
+    public User createUser(String name, String email) {
+        validateInput(name, email);
+        User user = new User(name, email);
+        return userRepository.save(user);
     }
 
-    @Transactional
-    public void assignRole(UUID userId, UUID roleId) {
-        var user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        var role = roleRepo.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+    public User getUserById(UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with ID "+id+" not found"));
+    }
+
+    public List<User> getAllUsers(int page, int size) {
+        return userRepository.findAll(page, size);
+    }
+
+    public void assignRoleToUser(UUID userId, UUID roleId) {
+        User user = getUserById(userId);
+        Role role = roleRepository.findById(roleId).orElseThrow(() -> new RoleNotFoundException("Role with ID "+roleId+" not found"));
         user.assignRole(role);
-        userRepo.save(user);
+        userRepository.save(user);
     }
 
-    @Transactional
-    public void removeRole(UUID userId, UUID roleId) {
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Role role = roleRepo.findById(roleId)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+    public void removeRoleFromUser(UUID userId, UUID roleId) {
+        User user = getUserById(userId);
+        Role role = roleRepository.findById(roleId).orElseThrow(() -> new RoleNotFoundException("Role with ID "+roleId+" not found"));
         user.removeRole(role);
-        userRepo.save(user);
+        userRepository.save(user);
     }
 
-    @Transactional(readOnly = true)
-    public UserResponse getUser(UUID id) {
-        var user = userRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        var roles = user.getRoles().stream()
-                .map(Role::getRoleName)
-                .collect(Collectors.toList());
-        return new UserResponse(
-                user.getId(), user.getName(), user.getEmail(),
-                user.getCreatedDate(), user.getUpdatedDate(), roles
-        );
+    public void validateInput(String name, String email) {
+        if(name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("User name cannot be blank");
+        }
+
+        if(email == null || email.trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be blank");
+        }
+
+        if(!isValidEmail(email)) {
+            throw new IllegalArgumentException("Invalid Email Format");
+        }
+    }
+
+    public boolean isValidEmail(String email) {
+        String regex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        return email.matches(regex);
+    }
+
+    public static class UserNotFoundException extends RuntimeException {
+        public UserNotFoundException(String message) {
+            super(message);
+        }
+    }
+    public static class RoleNotFoundException extends RuntimeException {
+        public RoleNotFoundException(String message) {
+            super(message);
+        }
     }
 }

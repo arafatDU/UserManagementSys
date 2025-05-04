@@ -2,32 +2,38 @@ package com.arafat.UserManagementSys.infrastructure.persistence;
 
 
 import jakarta.persistence.*;
-import java.time.Instant;
 import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
 public class RoleJpaEntity {
-    @Id private UUID id;
+    @Id
+    @Column(columnDefinition = "VARCHAR(36)")
+    private String id;
+
+    @Column(nullable = false, unique = true)
     private String roleName;
-    private Instant createdDate;
-    private Instant updatedDate;
 
-    protected RoleJpaEntity() {}
-
-    public RoleJpaEntity(UUID id, String roleName, Instant c, Instant u) {
-        this.id = id; this.roleName = roleName;
-        this.createdDate = c; this.updatedDate = u;
+    public RoleJpaEntity() {
     }
 
-    // << Add these getters >>
-    public UUID getId() { return id; }
-    public String getRoleName() { return roleName; }
-    public Instant getCreatedDate() { return createdDate; }
-    public Instant getUpdatedDate() { return updatedDate; }
+    public RoleJpaEntity(String id, String roleName) {
+        this.id = id;
+        this.roleName = roleName;
+    }
 
-    // And setters if needed:
-    public void setRoleName(String roleName) { this.roleName = roleName; }
-    public void setUpdatedDate(Instant updatedDate) { this.updatedDate = updatedDate; }
+
+    public com.arafat.UserManagementSys.domain.Role toDomainEntity() {
+        return new com.arafat.UserManagementSys.domain.Role(
+                UUID.fromString(this.id),
+                this.roleName
+        );
+    }
+
+    public static RoleJpaEntity fromDomainEntity(com.arafat.UserManagementSys.domain.Role role) {
+        return new RoleJpaEntity(
+                role.getId().toString(),
+                role.getRoleName()
+        );
+    }
 }
-

@@ -1,20 +1,28 @@
 package com.arafat.UserManagementSys.infrastructure.persistence;
 
+
+
+import com.arafat.UserManagementSys.domain.Role;
+import com.arafat.UserManagementSys.domain.User;
 import jakarta.persistence.*;
-import java.time.Instant;
-import java.util.Collection;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
 public class UserJpaEntity {
-    @Id private UUID id;
+    @Id
+    @Column(columnDefinition = "VARCHAR(36)")
+    private String id;
+
+    @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false, unique = true)
     private String email;
-    private Instant createdDate;
-    private Instant updatedDate;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -24,23 +32,52 @@ public class UserJpaEntity {
     )
     private Set<RoleJpaEntity> roles = new HashSet<>();
 
-    protected UserJpaEntity() {}
+    public UserJpaEntity() {}
 
-    public UserJpaEntity(UUID id, String name, String email, Instant c, Instant u) {
-        this.id = id; this.name = name; this.email = email;
-        this.createdDate = c; this.updatedDate = u;
+    public UserJpaEntity(String id, String name, String email) {
+        this.id=id;
+        this.name=name;
+        this.email=email;
     }
 
-    // << Add these getters >>
-    public UUID getId() { return id; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-    public Instant getCreatedDate() { return createdDate; }
-    public Instant getUpdatedDate() { return updatedDate; }
-    public Set<RoleJpaEntity> getRoles() { return roles; }
+    public String getId() {
+        return id;
+    }
 
-    // If you ever need to modify, add setters too:
-    public void setName(String name) { this.name = name; }
-    public void setEmail(String email) { this.email = email; }
-    public void setUpdatedDate(Instant updatedDate) { this.updatedDate = updatedDate; }
+    public void setId(String id) {
+        this.id = id;
+    }
+    public void setRoles(Set<RoleJpaEntity> roles) {
+        this.roles = roles;
+    }
+
+    public User toDomainEntity() {
+        User user = new User(
+                UUID.fromString(this.id),
+                this.name,
+                this.email
+        );
+
+        Set<Role> domainRoles = this.roles.stream()
+                .map(RoleJpaEntity::toDomainEntity)
+                .collect(Collectors.toSet());
+
+        domainRoles.forEach(user::assignRole);
+        return user;
+    }
+
+    public static UserJpaEntity fromDomainEntity(User user) {
+        UserJpaEntity entity = new UserJpaEntity(
+                user.getId().toString(),
+                user.getName(),
+                user.getEmail()
+        );
+
+        Set<RoleJpaEntity> jpaRoles = user.getRoles().stream()
+                .map(role -> new RoleJpaEntity(role.getId().toString(), role.getRoleName()))
+                .collect(Collectors.toSet());
+
+        entity.setRoles(jpaRoles);
+        return entity;
+    }
 }
